@@ -1,6 +1,7 @@
 // client/src/App.jsx
 import { useState } from 'react';
 import Whiteboard from './Whiteboard';
+import Dashboard from './Dashboard';
 
 function App() {
   const [token, setToken] = useState(null);
@@ -64,22 +65,45 @@ function App() {
   }
 
   // 2. If logged in but hasn't picked a room, show Room Screen
+  // if (token && !roomId) {
+  //   return (
+  //     <div style={{ padding: '40px', display: 'flex', justifyContent: 'center', fontFamily: 'sans-serif' }}>
+  //        <form onSubmit={(e) => { e.preventDefault(); setRoomId(roomInput); }} style={{ display: 'flex', flexDirection: 'column', gap: '15px', width: '300px' }}>
+  //           <h2 style={{ textAlign: 'center' }}>Join a Room</h2>
+  //           <p style={{ textAlign: 'center', fontSize: '14px', color: '#666' }}>Type any room name to create or join it.</p>
+  //           <input value={roomInput} onChange={(e) => setRoomInput(e.target.value)} placeholder="e.g., DesignTeam" required style={{ padding: '8px' }} />
+  //           <button type="submit" style={{ padding: '10px', cursor: 'pointer' }}>Enter Whiteboard</button>
+  //        </form>
+  //     </div>
+  //   );
+  // }
+
+  // 2. If logged in but NO room selected, show the NEW Dashboard
   if (token && !roomId) {
     return (
-      <div style={{ padding: '40px', display: 'flex', justifyContent: 'center', fontFamily: 'sans-serif' }}>
-         <form onSubmit={(e) => { e.preventDefault(); setRoomId(roomInput); }} style={{ display: 'flex', flexDirection: 'column', gap: '15px', width: '300px' }}>
-            <h2 style={{ textAlign: 'center' }}>Join a Room</h2>
-            <p style={{ textAlign: 'center', fontSize: '14px', color: '#666' }}>Type any room name to create or join it.</p>
-            <input value={roomInput} onChange={(e) => setRoomInput(e.target.value)} placeholder="e.g., DesignTeam" required style={{ padding: '8px' }} />
-            <button type="submit" style={{ padding: '10px', cursor: 'pointer' }}>Enter Whiteboard</button>
-         </form>
-      </div>
+      <Dashboard 
+        username={username} 
+        onJoinRoom={(id) => setRoomId(id)} 
+        onLogout={() => {
+          setToken(null);
+          setUsername("");
+        }}
+      />
     );
   }
 
   // 3. If logged in AND has a room, show Whiteboard
   // We pass the roomId down as a prop!
-  return <Whiteboard token={token} roomId={roomId} />;
+  // return <Whiteboard token={token} roomId={roomId} />;
+
+  // 3. If a room IS selected, show the Whiteboard
+  return (
+    <Whiteboard 
+      roomId={roomId} 
+      username={username} 
+      onLeave={() => setRoomId(null)} // Allows them to go back to dashboard
+    />
+  );
 }
 
 export default App;
