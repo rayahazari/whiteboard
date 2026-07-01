@@ -32,8 +32,10 @@ const userSchema = new mongoose.Schema({
 const User = mongoose.model('User', userSchema);
 
 const roomSchema = new mongoose.Schema({
-  roomId: { type: String, required: true, unique: true },
-  drawHistory: { type: Array, default: [] } // Stores all the lines drawn
+  roomId: { type: String, required: true, unique: true }, // e.g., 'abc-123-xyz'
+  name: { type: String, required: true }, // e.g., "Math Assignment"
+  createdBy: { type: String, required: true }, // The username or user ID
+  createdAt: { type: Date, default: Date.now }
 });
 const Room = mongoose.model('Room', roomSchema);
 
@@ -70,6 +72,42 @@ app.post('/login', async (req, res) => {
     return res.status(401).json({ message: "Invalid credentials" });
   } catch (err) {
     res.status(500).json({ message: "Server error" });
+  }
+});
+
+const crypto = require('crypto');
+
+// CREATE a new room
+app.post('/api/rooms', async (req, res) => {
+  const { name, createdBy } = req.body;
+  const roomId = crypto.randomBytes(4).toString('hex'); // Generates a unique 8-character ID
+  
+  try {
+    const newRoom = new Room({ roomId, name, createdBy });
+    await newRoom.save();
+    res.status(201).json(newRoom);
+  } catch (error) {
+    res.status(500).json({ message: "Error creating room" });
+  }
+});
+
+// GET all rooms for a specific user
+app.get('/api/rooms/:username', async (req, res) => {
+  try {
+    const rooms = await Room.find({ createdBy: req.params.username });
+    res.status(200).json(rooms);
+  } catch (error) {
+    res.status(500).json({ message: "Error fetching rooms" });
+  }
+});
+
+// DELETE a room
+app.delete('/api/rooms/:roomId', async (req, res) => {
+  try {
+    await Room.deleteOne({ roomId: req.params.roomId });
+    res.status(200).json({ message: "Room deleted" });
+  } catch (error) {
+    res.status(500).json({ message: "Error deleting room" });
   }
 });
 
