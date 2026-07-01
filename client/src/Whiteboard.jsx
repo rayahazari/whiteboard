@@ -89,6 +89,42 @@ const Whiteboard = ({ token, roomId }) => {
 
   const onMouseUp = () => setIsDrawing(false);
 
+  const getTouchPos = (e) => {
+    const rect = canvasRef.current.getBoundingClientRect();
+    return {
+      x: e.touches[0].clientX - rect.left,
+      y: e.touches[0].clientY - rect.top
+    };
+  };
+
+  const onTouchStart = (e) => {
+    // Prevent scrolling when touching the canvas
+    e.preventDefault(); 
+    setIsDrawing(true);
+    const pos = getTouchPos(e);
+    currentX = pos.x;
+    currentY = pos.y;
+  };
+
+  const onTouchMove = (e) => {
+    e.preventDefault(); 
+    if (!isDrawing) return;
+    const pos = getTouchPos(e);
+    const newX = pos.x;
+    const newY = pos.y;
+    
+    const context = canvasRef.current.getContext('2d');
+    drawLine(context, currentX, currentY, newX, newY, color, lineWidth, true);
+    
+    currentX = newX;
+    currentY = newY;
+  };
+
+  const onTouchEnd = (e) => {
+    e.preventDefault();
+    setIsDrawing(false);
+  };
+
   // 5. Helper function to clear canvas locally and emit to others
   const clearCanvas = () => {
     const canvas = canvasRef.current;
@@ -154,12 +190,19 @@ const Whiteboard = ({ token, roomId }) => {
           borderRadius: '8px',
           cursor: 'crosshair', 
           backgroundColor: '#ffffff',
-          boxShadow: '0 4px 6px rgba(0,0,0,0.05)'
+          boxShadow: '0 4px 6px rgba(0,0,0,0.05)',
+          touchAction: 'none' // CRITICAL: Stops mobile browser from scrolling!
         }}
+        // Desktop Listeners
         onMouseDown={onMouseDown}
         onMouseMove={onMouseMove}
         onMouseUp={onMouseUp}
         onMouseOut={onMouseUp}
+        // Mobile Listeners
+        onTouchStart={onTouchStart}
+        onTouchMove={onTouchMove}
+        onTouchEnd={onTouchEnd}
+        onTouchCancel={onTouchEnd}
       />
     </div>
   );
