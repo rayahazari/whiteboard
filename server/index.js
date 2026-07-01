@@ -175,6 +175,17 @@ io.on("connection", (socket) => {
     );
   });
 
+  socket.on("clear", async ({ roomId }) => {
+    // Tell everyone else in the room to wipe their screens immediately
+    socket.to(roomId).emit("clear");
+
+    // Wipe the history in MongoDB so the lines don't come back on refresh
+    await Drawing.updateOne(
+      { roomId },
+      { $set: { lines: [] } } 
+    );
+  });
+
   socket.on("disconnect", () => {
     console.log("User disconnected:", socket.user.username);
   });
