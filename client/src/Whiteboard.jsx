@@ -9,7 +9,7 @@ const Whiteboard = ({ token, roomId, onLeave }) => {
   const [color, setColor] = useState('#000000');
   const [lineWidth, setLineWidth] = useState(2);
 
-  useEffect(() => {
+  /* useEffect(() => {
     socketRef.current = io(import.meta.env.VITE_API_URL, {
       auth: { token }
     });
@@ -32,6 +32,49 @@ const Whiteboard = ({ token, roomId, onLeave }) => {
     });
 
     // 4. LISTEN FOR CLEAR EVENT
+    socketRef.current.on('clear', () => {
+      const context = canvasRef.current.getContext('2d');
+      context.clearRect(0, 0, canvasRef.current.width, canvasRef.current.height);
+    });
+
+    return () => socketRef.current.disconnect();
+  }, [roomId, token]); */
+
+  useEffect(() => {
+    // 1. Force WebSocket transport to bypass proxy issues
+    socketRef.current = io(import.meta.env.VITE_API_URL, {
+      auth: { token },
+      transports: ['websocket'] // <--- ADD THIS: Sometimes Vercel/Render block default polling
+    });
+
+    // --- ADD THESE 3 DIAGNOSTIC LOGS ---
+    socketRef.current.on('connect', () => {
+      console.log("✅ Socket Connected! ID:", socketRef.current.id);
+      socketRef.current.emit('join-room', roomId);
+    });
+
+    socketRef.current.on('connect_error', (err) => {
+      console.error("❌ Socket Connection Error:", err.message);
+    });
+
+    socketRef.current.on('disconnect', (reason) => {
+      console.warn("⚠️ Socket Disconnected:", reason);
+    });
+    // -----------------------------------
+
+    socketRef.current.on('canvas-history', (lines) => {
+      console.log(`📥 Received ${lines.length} lines of history`);
+      const context = canvasRef.current.getContext('2d');
+      lines.forEach(line => {
+        drawLine(context, line.currentX, line.currentY, line.newX, line.newY, line.color, line.lineWidth, false);
+      });
+    });
+
+    socketRef.current.on('draw', (data) => {
+      const context = canvasRef.current.getContext('2d');
+      drawLine(context, data.currentX, data.currentY, data.newX, data.newY, data.color, data.lineWidth, false);
+    });
+
     socketRef.current.on('clear', () => {
       const context = canvasRef.current.getContext('2d');
       context.clearRect(0, 0, canvasRef.current.width, canvasRef.current.height);
