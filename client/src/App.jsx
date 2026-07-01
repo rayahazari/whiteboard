@@ -99,6 +99,7 @@ function App() {
   // 3. If a room IS selected, show the Whiteboard
   return (
     <Whiteboard 
+      token={token}
       roomId={roomId} 
       username={username} 
       onLeave={() => setRoomId(null)} // Allows them to go back to dashboard
